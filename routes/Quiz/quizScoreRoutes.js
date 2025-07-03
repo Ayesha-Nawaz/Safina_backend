@@ -85,6 +85,15 @@ router.post("/submitscore", async (req, res) => {
         });
       }
 
+      // Validate question limit (maximum 5 questions per submission)
+      if (totalQuestions > 5) {
+        console.error("Too many questions in submission:", totalQuestions);
+        return res.status(400).json({
+          error: "Maximum 5 questions allowed per submission",
+          received: { totalQuestions }
+        });
+      }
+
       let quizObjectId;
       try {
         quizObjectId = mongoose.Types.ObjectId.isValid(quizId)
@@ -137,6 +146,15 @@ router.post("/submitscore", async (req, res) => {
         };
       });
 
+      // Validate number of answers matches totalQuestions and doesn't exceed 5
+      if (formattedAnswers.length > 5) {
+        console.error("Too many answers in submission:", formattedAnswers.length);
+        return res.status(400).json({
+          error: "Maximum 5 answers allowed per submission",
+          received: { answerCount: formattedAnswers.length }
+        });
+      }
+
       // Prepare score object
       const scoreObject = {
         quizId: quizObjectId,
@@ -149,23 +167,46 @@ router.post("/submitscore", async (req, res) => {
 
       console.log("Formatted score object:", JSON.stringify(scoreObject, null, 2));
 
-      // Save or update the score using findOneAndUpdate with upsert
+      // Check if a score for this quiz and user already exists
       try {
-        const result = await QuizScore.findOneAndUpdate(
-          { userId: userObjectId },
-          {
-            $push: {
-              scores: scoreObject
-            }
-          },
-          { 
-            upsert: true, 
-            new: true,
-            runValidators: true
-          }
-        );
+        const existingScore = await QuizScore.findOne({
+          userId: userObjectId,
+          "scores.quizId": quizObjectId
+        });
 
-        console.log("Score saved successfully. Document ID:", result._id);
+        if (existingScore) {
+          // Update existing score
+          const result = await QuizScore.findOneAndUpdate(
+            { userId: userObjectId, "scores.quizId": quizObjectId },
+            {
+              $set: {
+                "scores.$": scoreObject
+              }
+            },
+            { 
+              new: true,
+              runValidators: true
+            }
+          );
+          console.log("Score updated successfully. Document ID:", result._id);
+        } else {
+          // Add new score
+          const result = await QuizScore.findOneAndUpdate(
+            { userId: userObjectId },
+            {
+              $push: {
+                scores: scoreObject
+              }
+            },
+            { 
+              upsert: true, 
+              new: true,
+              runValidators: true
+            }
+          );
+          console.log("Score saved successfully. Document ID:", result._id);
+        }
+
         processedScores.push({
           quizId: quizId,
           score: score,
@@ -242,8 +283,8 @@ router.post("/submitscore", async (req, res) => {
     console.error("Error submitting quiz:", error);
     console.error("Stack trace:", error.stack);
     
-    return res.status(500).json({ 
-      error: "Internal server error", 
+    return res.status(400).json({ 
+      error: "Invalid submission", 
       message: error.message,
       timestamp: new Date().toISOString()
     });

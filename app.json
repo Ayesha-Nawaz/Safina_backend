@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "2f36eb21-6053-4899-8dcf-6ec9dd40ab5e"
+      }
+    },
+    "android": {
+      "package": "com.ayesha_nawaz.backend"
+    }
+  }
+}
