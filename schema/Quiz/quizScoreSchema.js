@@ -38,10 +38,7 @@ const quizScoreSchema = new mongoose.Schema({
           },
         },
       ],
-      date: {
-        type: Date,
-        required: true,
-      },
+      
     },
   ],
 });
