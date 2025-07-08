@@ -1,26 +1,30 @@
 const mongoose = require("mongoose");
 
 const namazProgressSchema = new mongoose.Schema({
-  userId: { 
-    type: String, 
-    required: true 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
   },
-  progress: [
-    {
-      category: { 
-        type: String, 
-        required: true 
+  progress: [{
+    category: {
+      type: String,
+      required: true
+    },
+    learnedItems: [{
+      namazId: {
+        type: String,
+        required: true
       },
-      dua: { 
-        type: String, 
-        required: false // Change to false if it's not always required
-      },
-      namazItems: [{ 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Namaz" 
-      }],
-    }
-  ],
+      dua: {
+        type: String,
+        default: null
+      }
+    }]
+  }]
+}, {
+  timestamps: true
 });
+
 
 module.exports = namazProgressSchema;

@@ -18,7 +18,6 @@ router.get("/namazprogress/:userId", async (req, res) => {
     res.status(500).json({ message: "Error fetching namaz progress", error: err.message });
   }
 });
-
 // POST: Update namaz progress by category, namaz item, and dua
 router.post("/namazprogress", async (req, res) => {
   try {
@@ -29,9 +28,6 @@ router.post("/namazprogress", async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Check if user exists in the database
-    // (This would depend on your user model implementation)
-    
     // Find existing progress document for this user
     let userProgress = await NamazProgress.findOne({ userId });
     
@@ -50,24 +46,32 @@ router.post("/namazprogress", async (req, res) => {
       // Create new category if it doesn't exist
       categoryProgress = {
         category,
-        dua, // Store the dua field here
-        namazItems: [namazId]
+        learnedItems: [
+          {
+            namazId,
+            dua: dua || null
+          }
+        ]
       };
       userProgress.progress.push(categoryProgress);
     } else {
-      // Update existing category
+      // Check if this specific namazId already exists
+      const existingItem = categoryProgress.learnedItems?.find(item => item.namazId === namazId);
       
-      // Add the dua field if provided
-      if (dua) {
-        categoryProgress.dua = dua;
-      }
-      
-      // Check if namazId already exists to avoid duplicates
-      if (!categoryProgress.namazItems.includes(namazId)) {
-        categoryProgress.namazItems.push(namazId);
-      } else {
+      if (existingItem) {
         return res.status(200).json({ message: 'Namaz item already marked as read' });
       }
+      
+      // Initialize learnedItems array if it doesn't exist (for backward compatibility)
+      if (!categoryProgress.learnedItems) {
+        categoryProgress.learnedItems = [];
+      }
+      
+      // Add new learned item
+      categoryProgress.learnedItems.push({
+        namazId,
+        dua: dua || null
+      });
     }
     
     // Save updated progress document
