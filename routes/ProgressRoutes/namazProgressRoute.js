@@ -5,8 +5,7 @@ const NamazProgress = require("../../models/Progress/namazProgressModel");
 // GET: Fetch namaz progress by user, including full namaz details
 router.get("/namazprogress/:userId", async (req, res) => {
   try {
-    const progress = await NamazProgress.findOne({ userId: req.params.userId })
-      .populate("progress.namazItems", "category dua");
+    const progress = await NamazProgress.findOne({ userId: req.params.userId });
 
     if (!progress || !progress.progress || progress.progress.length === 0) {
       return res.status(200).json([]); // Return empty if no progress yet
@@ -18,6 +17,7 @@ router.get("/namazprogress/:userId", async (req, res) => {
     res.status(500).json({ message: "Error fetching namaz progress", error: err.message });
   }
 });
+
 // POST: Update namaz progress by category, namaz item, and dua
 router.post("/namazprogress", async (req, res) => {
   try {
