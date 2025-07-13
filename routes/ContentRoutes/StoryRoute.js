@@ -67,20 +67,47 @@ router.get('/stories/type/:type', async (req, res) => {
   }
 });
 
-// PUT route to edit a story by its ID
+
+// PUT route to update a story by ID
 router.put('/stories/:id', async (req, res) => {
   try {
+    console.log("Updating story with ID:", req.params.id);
+    console.log("Update data:", req.body);
+    
     const updatedStory = await Story.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
+    
+    // BUG FIX: Check updatedStory instead of Story
     if (!updatedStory) {
+      console.log("Story not found for update with ID:", req.params.id);
       return res.status(404).json({ message: 'Story not found' });
     }
-    res.status(200).json({ message: 'Story updated successfully', story: updatedStory });
+    
+    console.log("Story updated successfully:", updatedStory.title);
+    res.status(200).json({ 
+      message: 'Story updated successfully', 
+      story: updatedStory 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error("Error updating story:", error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors: error.errors 
+      });
+    }
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+      return res.status(400).json({ message: 'Invalid story ID format' });
+    }
+    
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
