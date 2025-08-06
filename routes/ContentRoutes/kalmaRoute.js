@@ -42,7 +42,7 @@ router.put('/:id', async (req, res) => {
   try {
     const kalma = await Kalma.findById(req.params.id); // Find Kalma by id
     if (!kalma) {
-      return res.status(404).json({ message: 'Kalma not found' });
+      return res.status(404).json({ message: 'Kalma not found!' });
     }
     Object.assign(kalma, req.body); // Update Kalma with new data
     await kalma.save();
